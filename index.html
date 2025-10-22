@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#f4f7f5" />
+  <title>Plant Q&A</title>
+
+  <!-- Early theme set (prevents flash of wrong theme) -->
+  <script>
+  (function(){
+    function safeGet(k){ try { return localStorage.getItem(k); } catch(_) { return null; } }
+    var saved = safeGet('plantqa_theme'); // 'light' | 'dark' | null
+    var html = document.documentElement;
+    if (saved === 'light' || saved === 'dark') {
+      html.setAttribute('data-theme', saved);
+    } else {
+      var prefersDark = false;
+      try { prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches; } catch(_){}
+      html.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
+    }
+  })();
+  </script>
+
+  <style>
+    /* Embed-friendly: fill iframe, zero margins */
+    html,body{height:100%; margin:0}
+    body{display:flex; flex-direction:column; min-height:100dvh}
+
+    :root{
+      --bg:#f4f7f5; --surface:#fff; --border:#e6e9ee; --text:#0c1b17; --muted:#6b7a75;
+      --accent1:#0e7a53; --accent2:#2f5d8c;
+      --chip-bg:#f1f5f9; --chip-border:#e5e7eb;
+      --pulse-a:#f3f4f6; --pulse-b:#e9eef7; --shimmer-mid:rgba(100,115,140,.09);
+    }
+    @media (prefers-color-scheme: dark){
+      :root{
+        --bg:#0e1412; --surface:#121a17; --border:#1f2a25; --text:#e9f2ee; --muted:#9bb1a8;
+        --accent1:#21b67f; --accent2:#5aa0ff;
+        --chip-bg:#15201b; --chip-border:#223129;
+        --pulse-a:#17211d; --pulse-b:#1d2a24; --shimmer-mid:rgba(180,220,200,.10);
+      }
+    }
+    html[data-theme="light"]{ color-scheme:light }
+    html[data-theme="dark"]{ color-scheme:dark }
+
+    *{box-sizing:border-box}
+    body{font-family:Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;background:var(--bg);color:var(--text)}
+
+    header{position:sticky; top:0; z-index:10; background:color-mix(in oklab, var(--surface) 92%, transparent);
+      backdrop-filter:blur(8px); border-bottom:1px solid var(--border)}
+    .wrap{max-width:1040px; margin:0 auto; padding:14px 16px; width:100%}
+    .row{display:flex; align-items:center; gap:12px}
+    h1{margin:0; font-size:22px; letter-spacing:.2px}
+    .sub{margin:2px 0 0; color:var(--muted); font-size:12px}
+    .spacer{flex:1}
+
+    main{padding:18px 0 64px; flex:1}
+    .card{background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:14px}
+    textarea{width:100%; min-height:110px; padding:12px 14px; border:1px solid var(--border); border-radius:12px; background:var(--surface); color:var(--text); font:inherit; line-height:1.4; resize:vertical; box-shadow: inset 0 1px 0 rgba(0,0,0,.03)}
+    .actions{display:flex; gap:8px; flex-direction:column}
+    button{padding:10px 16px; border:0; border-radius:12px; color:#fff; font-weight:600; cursor:pointer; background:linear-gradient(135deg, var(--accent1), var(--accent2)); box-shadow:0 1px 0 rgba(0,0,0,.04); transition:transform .04s ease, filter .12s ease}
+    button:hover:not(:disabled){filter:brightness(1.03)}
+    button:active{transform:translateY(1px)}
+    button.ghost{background:transparent; color:var(--text); border:1px solid var(--border)}
+    button:disabled{opacity:.6; cursor:not-allowed}
+
+    .grid{display:grid; gap:16px; margin-top:16px; grid-template-columns:1fr 1fr}
+    @media (max-width:860px){.grid{grid-template-columns:1fr}}
+    .head{display:flex; align-items:center; gap:10px}
+    h3{margin:0; font-size:16px}
+    .chip{font-size:12px; padding:2px 8px; border-radius:999px; border:1px solid var(--chip-border); background:var(--chip-bg); min-width:64px; text-align:center}
+
+    .answer{font-size:15px; line-height:1.6; margin-top:6px}
+    .answer ul{margin:6px 0 0; padding-left:18px}
+    .answer li{margin:3px 0}
+    .muted{color:var(--muted)}
+
+    /* Removed #themeBtn styles */
+    #devToggleBtn{padding:8px 12px; border-radius:12px; color:var(--text); background:transparent; border:1px solid var(--border); cursor:pointer}
+
+    #overlayBackdrop{position:fixed; inset:0; background:rgba(0,0,0,.2); backdrop-filter:blur(6px); opacity:0; pointer-events:none; transition:opacity .25s ease}
+    #devOverlay{position:fixed; left:50%; transform:translate(-50%,-20px); top:12px; width:min(1080px,96vw); max-height:90vh; overflow:auto; background:color-mix(in oklab, var(--surface) 96%, transparent); backdrop-filter:blur(12px); border:1px solid var(--border); border-radius:16px; box-shadow:0 10px 30px rgba(0,0,0,.18); opacity:0; pointer-events:none; transition:opacity .25s ease, transform .25s ease}
+    #overlayBackdrop.open{opacity:1; pointer-events:auto}
+    #devOverlay.open{opacity:1; pointer-events:auto; transform:translate(-50%,0)}
+    .overlayWrap{padding:16px}
+    .devGrid{display:grid; gap:16px; grid-template-columns:1fr 1fr}
+    @media (max-width:860px){.devGrid{grid-template-columns:1fr}}
+    .kv{display:grid; grid-template-columns:140px 1fr; gap:8px; font-size:13px}
+    .kv div:nth-child(odd){color:var(--muted)}
+    .mono{font:12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; white-space:pre-wrap; word-break:break-word}
+
+    .pulsing{animation:pulse 1.2s ease-in-out infinite}
+    @keyframes pulse{0%,100%{background:var(--pulse-a)} 50%{background:var(--pulse-b)}}
+    .card.loading{position:relative; overflow:hidden}
+    .card.loading::after{content:""; position:absolute; inset:0; background:linear-gradient(90deg, transparent 0%, var(--shimmer-mid) 50%, transparent 100%); transform:translateX(-100%); animation:sweep 1.4s ease-in-out infinite}
+    @keyframes sweep{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
+
+    .previewList{margin:8px 0 0; padding-left:18px}
+    .previewList li{margin:3px 0}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap row">
+      <div>
+        <h1>🌿 Plant Q&A</h1>
+        <div class="sub">Ask about <strong>my</strong> plants. Side-by-side AI answers.</div>
+      </div>
+      <div class="spacer"></div>
+      <!-- Theme button removed -->
+      <button id="devToggleBtn" title="Developer details">⚙️ Dev View</button>
+    </div>
+  </header>
+
+  <main>
+    <div class="wrap">
+      <div class="card">
+        <div class="row" style="gap:12px; align-items:flex-start;">
+          <textarea id="q" placeholder="e.g., “Which need full sun?” or “Low is 45°F — which should come inside?”"></textarea>
+          <div class="actions">
+            <button id="askBtn" onclick="ask()">Ask</button>
+            <button class="ghost" onclick="previewPlants()">Preview plants</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid">
+        <div class="card" id="cardGemini">
+          <div class="head"><h3>🧠 Gemini</h3><span class="chip" id="gmTime"></span></div>
+          <div id="gOut" class="answer muted"></div>
+        </div>
+        <div class="card" id="cardPython">
+          <div class="head"><h3>🧬 Python LLM</h3><span class="chip" id="pyTime"></span></div>
+          <div id="pOut" class="answer muted"></div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:16px">
+        <div class="head"><h3>Preview</h3></div>
+        <div id="previewHead" class="muted">—</div>
+        <ol id="previewList" class="previewList muted"></ol>
+      </div>
+    </div>
+  </main>
+
+  <!-- Dev overlay -->
+  <div id="overlayBackdrop"></div>
+  <div id="devOverlay" role="dialog" aria-modal="true" aria-labelledby="devTitle">
+    <div class="overlayWrap">
+      <div class="row">
+        <h3 id="devTitle" style="margin:0">⚙️ Developer View</h3>
+        <div class="spacer"></div>
+        <button class="ghost" onclick="toggleDev(false)">Close</button>
+      </div>
+
+      <div class="devGrid" style="margin-top:12px">
+        <div class="card">
+          <div class="head"><h3>Gemini</h3><span class="chip" id="gmModelDev">(—)</span></div>
+          <div class="kv" style="margin-top:8px">
+            <div>Intent / Mode</div><div id="gmIntent">—</div>
+            <div>Scanned</div><div id="gmScan">—</div>
+            <div>Matched</div><div id="gmMatch">—</div>
+            <div>Wiki lookups</div><div id="gmWiki" class="mono muted">(none)</div>
+            <div>Elapsed</div><div id="gmMs">—</div>
+            <div>Error</div><div id="gmErr" class="mono muted">(none)</div>
+          </div>
+          <div style="margin-top:10px">
+            <div style="font-weight:600; margin-bottom:6px">Interpretation</div>
+            <div id="gmInterp" class="mono muted">—</div>
+          </div>
+          <div style="margin-top:10px">
+            <div style="font-weight:600; margin-bottom:6px">Examples (why matched)</div>
+            <div id="gmExamples" class="mono muted">(none)</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="head"><h3>Python LLM</h3><span class="chip" id="pyModelDev">(—)</span></div>
+          <div class="kv" style="margin-top:8px">
+            <div>Intent / Mode</div><div id="pyIntent">—</div>
+            <div>Scanned</div><div id="pyScan">—</div>
+            <div>Matched</div><div id="pyMatch">—</div>
+            <div>Wiki lookups</div><div id="pyWiki" class="mono muted">(none)</div>
+            <div>Elapsed</div><div id="pyMs">—</div>
+            <div>Error</div><div id="pyErr" class="mono muted">(none)</div>
+          </div>
+          <div style="margin-top:10px">
+            <div style="font-weight:600; margin-bottom:6px">Interpretation</div>
+            <div id="pyInterp" class="mono muted">—</div>
+          </div>
+          <div style="margin-top:10px">
+            <div style="font-weight:600; margin-bottom:6px">Examples (why matched)</div>
+            <div id="pyExamples" class="mono muted">(none)</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:12px">
+        <h3>Shared Model Prompt</h3>
+        <div id="sharedPrompt" class="mono" style="margin-top:6px">(loading…)</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* ---------- Dev overlay toggle ---------- */
+    const devBtn = document.getElementById('devToggleBtn');
+    const backdrop = document.getElementById('overlayBackdrop');
+    const overlay  = document.getElementById('devOverlay');
+    function toggleDev(open){
+      if (open === undefined) open = !overlay.classList.contains('open');
+      overlay.classList.toggle('open', open);
+      backdrop.classList.toggle('open', open);
+    }
+    devBtn.addEventListener('click', ()=>toggleDev());
+
+    /* ---------- UI helpers ---------- */
+    function escapeHtml(s){ return String(s||'').replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
+    function renderAnswer(text, el){
+      const lines = String(text||'').split(/\r?\n/);
+      let html = '', inList = false;
+      for (const line of lines){
+        if (/^\s*-\s+/.test(line)){
+          if (!inList){ html += '<ul>'; inList = true; }
+          html += `<li>${escapeHtml(line.replace(/^\s*-\s+/, ''))}</li>`;
+        } else {
+          if (inList){ html += '</ul>'; inList = false; }
+          if (line.trim()) html += `<div>${escapeHtml(line)}</div>`;
+        }
+      }
+      if (inList) html += '</ul>';
+      el.innerHTML = html || '';
+      el.classList.toggle('muted', !text);
+    }
+    function fmtSeconds(ms){ return `${(Math.round((ms/1000)*10)/10).toFixed(1)}s`; }
+
+    /* ---------- Elements ---------- */
+    const qEl  = document.getElementById('q');
+    const btnAsk  = document.getElementById('askBtn');
+    const gOut = document.getElementById('gOut');
+    const pOut = document.getElementById('pOut');
+    const gmTime = document.getElementById('gmTime');
+    const pyTime = document.getElementById('pyTime');
+    const cardGemini = document.getElementById('cardGemini');
+    const cardPython = document.getElementById('cardPython');
+
+    const gmModelDev = document.getElementById('gmModelDev');
+    const pyModelDev = document.getElementById('pyModelDev');
+    const gmIntentEl = document.getElementById('gmIntent');
+    const pyIntentEl = document.getElementById('pyIntent');
+    const gmScanEl = document.getElementById('gmScan');
+    const pyScanEl = document.getElementById('pyScan');
+    const gmMatchEl = document.getElementById('gmMatch');
+    const pyMatchEl = document.getElementById('pyMatch');
+    const gmWikiEl = document.getElementById('gmWiki');
+    const pyWikiEl = document.getElementById('pyWiki');
+    const gmInterpEl   = document.getElementById('gmInterp');
+    const pyInterpEl   = document.getElementById('pyInterp');
+    const gmExamplesEl = document.getElementById('gmExamples');
+    const pyExamplesEl = document.getElementById('pyExamples');
+    const gmMsEl = document.getElementById('gmMs');
+    const pyMsEl = document.getElementById('pyMs');
+    const gmErrEl = document.getElementById('gmErr');
+    const pyErrEl = document.getElementById('pyErr');
+    const promptEl = document.getElementById('sharedPrompt');
+
+    const previewHead = document.getElementById('previewHead');
+    const previewList = document.getElementById('previewList');
+
+    function startCounter(el, card){
+      const t0 = performance.now();
+      card.classList.add('loading'); card.setAttribute('aria-busy','true');
+      el.classList.add('pulsing');
+      const id = setInterval(()=>{ el.textContent = `⏳ ${((performance.now()-t0)/1000).toFixed(1)}s`; }, 120);
+      return { id, t0 };
+    }
+    function stopCounter(el, card, tick, finalMs){
+      if (tick && tick.id) clearInterval(tick.id);
+      el.classList.remove('pulsing');
+      card.classList.remove('loading'); card.removeAttribute('aria-busy');
+      if (typeof finalMs === 'number') el.textContent = `⏱ ${(finalMs/1000).toFixed(1)}s`;
+    }
+
+    let currentRunId = 0;
+    let lastTicks = { g:null, p:null };
+    let safetyTimers = { g:null, p:null };
+
+    function clearDevDetails(){
+      gmModelDev.textContent='(—)'; pyModelDev.textContent='(—)';
+      gmIntentEl.textContent='—'; pyIntentEl.textContent='—';
+      gmScanEl.textContent='—'; pyScanEl.textContent='—';
+      gmMatchEl.textContent='—'; pyMatchEl.textContent='—';
+      gmWikiEl.textContent='(none)'; pyWikiEl.textContent='(none)';
+      gmInterpEl.textContent='—'; pyInterpEl.textContent='—';
+      gmExamplesEl.textContent='(none)'; pyExamplesEl.textContent='(none)';
+      gmMsEl.textContent='—'; pyMsEl.textContent='—';
+      gmErrEl.textContent='(none)'; pyErrEl.textContent='(none)';
+    }
+    function clearRunVisuals(){
+      if (lastTicks.g?.id) clearInterval(lastTicks.g.id);
+      if (lastTicks.p?.id) clearInterval(lastTicks.p.id);
+      if (safetyTimers.g) clearTimeout(safetyTimers.g);
+      if (safetyTimers.p) clearTimeout(safetyTimers.p);
+      lastTicks = { g:null, p:null }; safetyTimers = { g:null, p:null };
+
+      gOut.innerHTML=''; gOut.classList.add('muted'); gmTime.textContent=''; gmTime.classList.remove('pulsing');
+      pOut.innerHTML=''; pOut.classList.add('muted'); pyTime.textContent=''; pyTime.classList.remove('pulsing');
+      cardGemini.classList.remove('loading'); cardGemini.removeAttribute('aria-busy');
+      cardPython.classList.remove('loading'); cardPython.removeAttribute('aria-busy');
+    }
+
+    function ask(){
+      const q = (qEl.value||'').trim();
+      if (!q) { qEl.focus(); return; }
+
+      currentRunId++;
+      const runId = currentRunId;
+
+      clearDevDetails();
+      clearRunVisuals();
+      renderAnswer('Thinking…', gOut);
+      renderAnswer('Thinking…', pOut);
+      btnAsk.disabled = true; btnAsk.textContent = 'Thinking…';
+
+      const gTick = startCounter(gmTime, cardGemini);
+      const pTick = startCounter(pyTime, cardPython);
+      lastTicks = { g:gTick, p:pTick };
+
+      // Hard safety caps (3 min each)
+      safetyTimers.g = setTimeout(()=>{ if (runId!==currentRunId) return; stopCounter(gmTime, cardGemini, gTick); if (!cardPython.classList.contains('loading')) { btnAsk.disabled=false; btnAsk.textContent='Ask'; } }, 180000);
+      safetyTimers.p = setTimeout(()=>{ if (runId!==currentRunId) return; stopCounter(pyTime, cardPython, pTick); if (!cardGemini.classList.contains('loading')) { btnAsk.disabled=false; btnAsk.textContent='Ask'; } }, 180000);
+
+      // GEMINI
+      google.script.run
+        .withSuccessHandler(res => {
+          if (runId !== currentRunId) return;
+          renderAnswer(res.answer || '', gOut);
+          stopCounter(gmTime, cardGemini, gTick, res.dev?.ms);
+          clearTimeout(safetyTimers.g);
+
+          gmModelDev.textContent = res.dev?.model || '(—)';
+          gmIntentEl.textContent = res.dev?.intent || '—';
+          gmScanEl.textContent   = (res.dev && res.dev.mode !== 'explain') ? (res.dev.scanned ?? '—') : '—';
+          gmMatchEl.textContent  = (res.dev && res.dev.mode !== 'explain') ? (res.dev.matched ?? '—') : '—';
+          const gW = res.dev?.wikiLookups || [];
+          gmWikiEl.textContent = gW.length ? (gW.slice(0,6).join('\n') + (gW.length>6 ? `\n(+${gW.length-6} more)` : '')) : '(none)';
+          gmMsEl.textContent = (res.dev?.ms != null) ? `${(res.dev.ms/1000).toFixed(1)}s` : '—';
+          gmErrEl.textContent = res.dev?.error ? String(res.dev.error) : '(none)';
+          gmInterpEl.textContent = res.dev?.interpretation || '—';
+          const gEx = res.dev?.wikiExamples || [];
+          gmExamplesEl.textContent = gEx.length ? gEx.slice(0,3).map(x=>`• ${x.plant}: ${x.snippet}`).join('\n') : '(none)';
+
+          if (!cardPython.classList.contains('loading')) { btnAsk.disabled=false; btnAsk.textContent='Ask'; }
+        })
+        .withFailureHandler(err => {
+          if (runId !== currentRunId) return;
+          renderAnswer('Gemini unavailable', gOut);
+          stopCounter(gmTime, cardGemini, gTick);
+          clearTimeout(safetyTimers.g);
+          gmErrEl.textContent = String(err);
+          if (!cardPython.classList.contains('loading')) { btnAsk.disabled=false; btnAsk.textContent='Ask'; }
+        })
+        .askGeminiOnly(q);
+
+      // PYTHON
+      google.script.run
+        .withSuccessHandler(res => {
+          if (runId !== currentRunId) return;
+          renderAnswer(res.answer || '', pOut);
+          stopCounter(pyTime, cardPython, pTick, res.dev?.ms);
+          clearTimeout(safetyTimers.p);
+
+          pyModelDev.textContent = res.dev?.model || '(—)';
+          pyIntentEl.textContent = res.dev?.intent || '—';
+          pyScanEl.textContent   = (res.dev && res.dev.mode !== 'explain') ? (res.dev.scanned ?? '—') : '—';
+          pyMatchEl.textContent  = (res.dev && res.dev.mode !== 'explain') ? (res.dev.matched ?? '—') : '—';
+          const pW = res.dev?.wikiLookups || [];
+          pyWikiEl.textContent = pW.length ? (pW.slice(0,6).join('\n') + (pW.length>6 ? `\n(+${pW.length-6} more)` : '')) : '(none)';
+          pyMsEl.textContent = (res.dev?.ms != null) ? `${(res.dev.ms/1000).toFixed(1)}s` : '—';
+          pyErrEl.textContent = res.dev?.error ? String(res.dev.error) : '(none)';
+          pyInterpEl.textContent = res.dev?.interpretation || '—';
+          const pEx = res.dev?.wikiExamples || [];
+          pyExamplesEl.textContent = pEx.length ? pEx.slice(0,3).map(x=>`• ${x.plant}: ${x.snippet}`).join('\n') : '(none)';
+
+          if (!cardGemini.classList.contains('loading')) { btnAsk.disabled=false; btnAsk.textContent='Ask'; }
+        })
+        .withFailureHandler(err => {
+          if (runId !== currentRunId) return;
+          renderAnswer('Python LLM error: ' + err, pOut);
+          stopCounter(pyTime, cardPython, pTick);
+          clearTimeout(safetyTimers.p);
+          pyErrEl.textContent = String(err);
+          if (!cardGemini.classList.contains('loading')) { btnAsk.disabled=false; btnAsk.textContent='Ask'; }
+        })
+        .askPythonOnly(q);
+    }
+
+    // Enter submits
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Enter' && !e.shiftKey && e.target.id === 'q') { e.preventDefault(); ask(); }
+    });
+
+    function previewPlants(){
+      previewHead.textContent='Loading…'; previewList.innerHTML='';
+      previewHead.classList.remove('muted'); previewList.classList.add('muted');
+      google.script.run
+        .withSuccessHandler(obj => {
+          previewHead.textContent = `Sheet: ${obj.sheet} • ${obj.count} plants`;
+          previewList.innerHTML = obj.sample.map(s => `<li>${escapeHtml(s)}</li>`).join('');
+          previewList.classList.remove('muted');
+        })
+        .withFailureHandler(err => {
+          previewHead.textContent='Error loading preview';
+          previewList.innerHTML = `<li>${String(err)}</li>`;
+          previewList.classList.remove('muted');
+        })
+        .previewPlantsRich();
+    }
+
+    // Dev metadata + warmup on load
+    window.addEventListener('load', () => {
+      google.script.run
+        .withSuccessHandler(meta => {
+          gmModelDev.textContent = meta.geminiModel || '(—)';
+          pyModelDev.textContent = meta.pythonModel || '(—)';
+          document.getElementById('sharedPrompt').textContent = meta.prompt || '(—)';
+        })
+        .getSharedMeta();
+      google.script.run.warmPythonLLM();
+    });
+  </script>
+</body>
+</html>
