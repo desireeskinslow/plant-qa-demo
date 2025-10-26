@@ -9,65 +9,34 @@
     --bg:#000; --surface:#111; --text:#e7e7e7; --muted:#9aa0a6; --border:#222;
     --accent1:#1e90ff; --accent2:#3ea0ff; --radius:14px;
   }
-  html,body{margin:0;min-height:100%}
-  body{
-    font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-    background:var(--bg); color:var(--text); -webkit-font-smoothing:antialiased;
-  }
-  /* wrapper is a container for container queries, and also looks fine standalone */
-  .wrap{width:min(100%,1000px); margin:0 auto; padding:16px; container-type:inline-size}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,sans-serif}
+  .wrap{max-width:900px;margin:0 auto;padding:16px}
 
-  header{text-align:center;margin-bottom:12px}
-  h1{margin:0;font-size:clamp(20px,5vw,24px)}
+  header{text-align:center;margin-bottom:14px}
+  h1{margin:0;font-size:22px}
   .sub{color:var(--muted);font-size:14px;margin-top:4px}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px;margin-top:12px}
 
-  .card{background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:14px; box-shadow:0 8px 24px rgba(0,0,0,.4)}
-
-  /* Ask area — mobile-first (stacked) */
-  .ask-grid{display:grid; gap:10px; grid-template-columns:1fr; align-items:start}
   textarea{
-    width:100%; min-height:120px; background:#000; color:var(--text);
-    border:1px solid var(--border); border-radius:10px; padding:12px;
-    font-size:16px; line-height:1.5; resize:vertical;
+    width:100%;min-height:100px;background:#000;color:var(--text);
+    border:1px solid var(--border);border-radius:10px;padding:12px;font-size:16px;resize:vertical
   }
-  .actions{display:grid; gap:8px; grid-template-columns:1fr 1fr}
-  .btn{border:0;border-radius:10px;padding:12px 16px;font-size:15px;font-weight:600;cursor:pointer;color:#fff;
-       background:linear-gradient(135deg,var(--accent1),var(--accent2))}
+  .actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+  .btn{
+    border:0;border-radius:10px;padding:12px 16px;font-size:15px;font-weight:600;cursor:pointer;color:#fff;
+    background:linear-gradient(135deg,var(--accent1),var(--accent2));flex:1 1 160px;min-width:140px
+  }
   .btn.ghost{background:transparent;border:1px solid var(--border);color:var(--text)}
-  .hint{margin-top:6px;font-size:13px;color:var(--muted)}
+  .hint{font-size:13px;color:var(--muted);margin-top:6px}
 
-  /* Answers — default single column; two columns when wide */
-  .grid{display:grid; gap:12px; margin-top:14px; grid-template-columns:1fr}
-  .head{display:flex; justify-content:space-between; align-items:center}
-  .chip{font-size:12px; color:var(--muted)}
-  .answer{margin-top:8px; line-height:1.6}
+  .grid{display:grid;gap:12px;margin-top:14px}
+  @media(min-width:900px){.grid{grid-template-columns:1fr 1fr}}
+
+  .head{display:flex;justify-content:space-between;align-items:center}
+  .chip{font-size:12px;color:var(--muted)}
+  .answer{margin-top:8px;line-height:1.6}
   .muted{color:var(--muted)}
-  .previewList{margin:8px 0 0; padding-left:20px}
-
-  /* When the container is wide, go two-column and button sidebar */
-  @container (min-width: 900px){
-    .ask-grid{ grid-template-columns: 1fr minmax(200px,260px) }
-    .actions{ grid-template-columns: 1fr }
-    .grid{ grid-template-columns: 1fr 1fr }
-  }
-  /* Fallback for browsers without container queries */
-  @media (min-width: 900px){
-    .ask-grid{ grid-template-columns: 1fr minmax(200px,260px) }
-    .actions{ grid-template-columns: 1fr }
-    .grid{ grid-template-columns: 1fr 1fr }
-  }
-
-  /* Dev overlay */
-  #devToggleBtn{position:absolute; top:10px; right:10px; background:transparent; color:var(--text);
-                border:1px solid var(--border); border-radius:10px; padding:6px 10px; cursor:pointer}
-  #overlayBackdrop{position:fixed; inset:0; background:rgba(0,0,0,.6); opacity:0; pointer-events:none; transition:opacity .3s}
-  #overlayBackdrop.open{opacity:1; pointer-events:auto}
-  #devOverlay{position:fixed; top:10%; left:50%; transform:translateX(-50%) scale(.98); width:min(90%,900px);
-              max-height:80vh; overflow:auto; background:var(--surface); border:1px solid var(--border);
-              border-radius:14px; box-shadow:0 8px 30px rgba(0,0,0,.6); opacity:0; pointer-events:none; transition:opacity .3s, transform .3s}
-  #devOverlay.open{opacity:1; pointer-events:auto; transform:translateX(-50%) scale(1)}
-  .overlayWrap{padding:16px}
-  .mono{font:12px ui-monospace, Menlo, Consolas, monospace; white-space:pre-wrap; word-break:break-word}
+  ol{padding-left:20px;margin:8px 0 0}
 </style>
 </head>
 <body>
@@ -75,129 +44,96 @@
     <header>
       <h1>🌿 Plant Q&A</h1>
       <div class="sub">Ask about the plants. Side-by-side AI answers.</div>
-      <button id="devToggleBtn">⚙️ Dev View</button>
     </header>
 
     <div class="card">
-      <div class="ask-grid">
-        <textarea id="q" placeholder="e.g., which need full sun? or low is 45°F — which should come inside?"></textarea>
-        <div class="actions">
-          <button id="askBtn" class="btn">Ask</button>
-          <button id="previewBtn" class="btn ghost">Preview plants</button>
-        </div>
+      <textarea id="q" placeholder="e.g., which need full sun? or if the low is 45°F, which should come inside?"></textarea>
+      <div class="actions">
+        <button id="askBtn" class="btn">Ask</button>
+        <button id="previewBtn" class="btn ghost">Preview plants</button>
       </div>
       <div class="hint">Press <b>Enter</b> to Ask, <b>Shift+Enter</b> for a new line.</div>
     </div>
 
     <div class="grid">
-      <div class="card" id="cardGemini">
+      <div class="card">
         <div class="head"><h3>🧠 Gemini</h3><span id="gmTime" class="chip"></span></div>
         <div id="gOut" class="answer muted">—</div>
       </div>
-      <div class="card" id="cardPython">
+      <div class="card">
         <div class="head"><h3>🧬 Python LLM</h3><span id="pyTime" class="chip"></span></div>
         <div id="pOut" class="answer muted">—</div>
       </div>
     </div>
 
-    <div class="card" style="margin-top:14px">
+    <div class="card">
       <div class="head"><h3>Preview</h3></div>
       <div id="previewHead" class="muted">—</div>
-      <ol id="previewList" class="previewList muted"></ol>
-    </div>
-  </div>
-
-  <!-- Dev overlay -->
-  <div id="overlayBackdrop"></div>
-  <div id="devOverlay">
-    <div class="overlayWrap">
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <h3>⚙️ Developer View</h3>
-        <button class="btn ghost" onclick="toggleDev(false)">Close</button>
-      </div>
-      <div id="devContent" class="mono muted" style="margin-top:10px">(none)</div>
+      <ol id="previewList" class="muted"></ol>
     </div>
   </div>
 
 <script>
-  /* ====== CONFIG: Apps Script API URL ====== */
-  const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbwE9GbNFgDx_QQVakFbX3uPWIZX2PyBlvLCX13ch67ob4q2jO6ghrRKd2gPjUBJzuU/exec';
+const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbwE9GbNFgDx_QQVakFbX3uPWIZX2PyBlvLCX13ch67ob4q2jO6ghrRKd2gPjUBJzuU/exec';
+const gOut = document.getElementById('gOut');
+const pOut = document.getElementById('pOut');
+const gmTime = document.getElementById('gmTime');
+const pyTime = document.getElementById('pyTime');
+const qEl = document.getElementById('q');
+const previewHead = document.getElementById('previewHead');
+const previewList = document.getElementById('previewList');
 
-  /* ====== DOM handles ====== */
-  const gOut = document.getElementById('gOut');
-  const pOut = document.getElementById('pOut');
-  const gmTime = document.getElementById('gmTime');
-  const pyTime = document.getElementById('pyTime');
-  const qEl = document.getElementById('q');
-  const previewHead = document.getElementById('previewHead');
-  const previewList = document.getElementById('previewList');
-  const overlay = document.getElementById('devOverlay');
-  const backdrop = document.getElementById('overlayBackdrop');
-  document.getElementById('devToggleBtn').onclick = () => toggleDev(true);
-  backdrop.onclick = () => toggleDev(false);
-  function toggleDev(open){ overlay.classList.toggle('open',open); backdrop.classList.toggle('open',open); }
+document.getElementById('askBtn').onclick = ask;
+document.getElementById('previewBtn').onclick = previewPlants;
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey && e.target.id === 'q') { e.preventDefault(); ask(); }
+});
 
-  document.getElementById('askBtn').onclick = ask;
-  document.getElementById('previewBtn').onclick = previewPlants;
-  document.addEventListener('keydown', e => {
-    if (e.key === 'Enter' && !e.shiftKey && e.target.id === 'q') {
-      e.preventDefault(); ask();
-    }
-  });
+function renderAnswer(t, el){ el.textContent=t||'—'; el.classList.toggle('muted',!t); }
+function startCounter(el){ const t0=Date.now(); const id=setInterval(()=>{el.textContent=`⏳ ${((Date.now()-t0)/1000).toFixed(1)}s`;},200); return {id,t0}; }
+function stopCounter(el,t){ if(t){clearInterval(t.id); el.textContent=`⏱ ${((Date.now()-t.t0)/1000).toFixed(1)}s`; } }
+function safeErr(e){return (e&&e.message)?e.message:String(e);}
 
-  /* ====== Helpers ====== */
-  function renderAnswer(t, el){ el.textContent = t || '—'; el.classList.toggle('muted', !t); }
-  function startCounter(el){ const t0 = Date.now(); const id = setInterval(()=>{ el.textContent = `⏳ ${((Date.now()-t0)/1000).toFixed(1)}s`; }, 200); return {id,t0}; }
-  function stopCounter(el, tick){ if (tick){ clearInterval(tick.id); el.textContent = `⏱ ${((Date.now()-tick.t0)/1000).toFixed(1)}s`; } }
+async function api(action, params={}, {timeoutMs=30000}={}){
+  const qs=new URLSearchParams({action,...params}).toString();
+  const ctrl=new AbortController(); const timer=setTimeout(()=>ctrl.abort(new Error('timeout')),timeoutMs);
+  try{
+    const r=await fetch(`${GAS_API_URL}?${qs}`,{method:'GET',cache:'no-store',signal:ctrl.signal});
+    const text=await r.text();
+    let j; try{j=JSON.parse(text);}catch{throw new Error(`Bad JSON (${r.status})`);}
+    if(j&&j.ok===false)throw new Error(j.error||'API error');
+    return j;
+  }finally{clearTimeout(timer);}
+}
 
-  async function api(action, params = {}, { timeoutMs = 30000 } = {}) {
-    const qs = new URLSearchParams({ action, ...params }).toString();
-    const ctrl = new AbortController();
-    const t = setTimeout(() => ctrl.abort('timeout'), timeoutMs);
-    try {
-      const r = await fetch(`${GAS_API_URL}?${qs}`, { method: 'GET', cache: 'no-store', signal: ctrl.signal });
-      const j = await r.json();
-      if (j && j.ok === false) throw new Error(j.error || 'API error');
-      return j;
-    } finally { clearTimeout(t); }
-  }
+function ask(){
+  const q=qEl.value.trim(); if(!q)return;
+  renderAnswer('Thinking…',gOut); renderAnswer('Thinking…',pOut);
+  const gt=startCounter(gmTime); const pt=startCounter(pyTime);
 
-  /* ====== Actions ====== */
-  function ask(){
-    const q = qEl.value.trim(); if (!q) return;
+  api('ask_gemini',{q},{timeoutMs:30000})
+    .then(r=>renderAnswer(r.answer||'(no answer)',gOut))
+    .catch(e=>renderAnswer('Gemini error: '+safeErr(e),gOut))
+    .finally(()=>stopCounter(gmTime,gt));
 
-    renderAnswer('Thinking…', gOut);
-    renderAnswer('Thinking…', pOut);
-    const gt = startCounter(gmTime);
-    const pt = startCounter(pyTime);
+  api('ask_python',{q},{timeoutMs:45000})
+    .then(r=>renderAnswer(r.answer||'(no answer)',pOut))
+    .catch(e=>renderAnswer('Python error: '+safeErr(e),pOut))
+    .finally(()=>stopCounter(pyTime,pt));
+}
 
-    // Gemini — independent
-    api('ask_gemini', { q }, { timeoutMs: 30000 })
-      .then(res => renderAnswer(res.answer || '(no answer)', gOut))
-      .catch(err => renderAnswer('Gemini error: ' + err.message, gOut))
-      .finally(() => stopCounter(gmTime, gt));
-
-    // Python — independent
-    api('ask_python', { q }, { timeoutMs: 45000 })
-      .then(res => renderAnswer(res.answer || '(no answer)', pOut))
-      .catch(err => renderAnswer('Python error: ' + err.message, pOut))
-      .finally(() => stopCounter(pyTime, pt));
-  }
-
-  function previewPlants(){
-    previewHead.textContent = 'Loading…';
-    previewList.innerHTML = '';
-    api('preview', {}, { timeoutMs: 15000 })
-      .then(o => {
-        previewHead.textContent = `Sheet: ${o.sheet} • ${o.count} plants`;
-        previewList.innerHTML = (o.sample || []).map(s => `<li>${s}</li>`).join('');
-        previewList.classList.remove('muted');
-      })
-      .catch(err => {
-        previewHead.textContent = 'Error: ' + err.message;
-        previewList.innerHTML = '';
-      });
-  }
+function previewPlants(){
+  previewHead.textContent='Loading…'; previewList.innerHTML='';
+  api('preview',{}, {timeoutMs:15000})
+    .then(o=>{
+      previewHead.textContent=`Sheet: ${o.sheet} • ${o.count} plants`;
+      previewList.innerHTML=(o.sample||[]).map(s=>`<li>${s}</li>`).join('');
+      previewList.classList.remove('muted');
+    })
+    .catch(err=>{
+      previewHead.textContent='Error: '+safeErr(err); previewList.innerHTML='';
+    });
+}
 </script>
 </body>
 </html>
