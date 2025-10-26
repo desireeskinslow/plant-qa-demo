@@ -6,8 +6,36 @@
   <meta name="theme-color" content="#f4f7f5" />
   <title>Plant Q&A</title>
 
+<script>
+  const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbx4U9bMnkeMpCdXzhMyYr6L9kilUtelKSx_dRYSpigl-ELlOgJtWBi0ZFZAawiyOe0d/exec';
+
+  async function api(action, params) {
+    const qs = new URLSearchParams({ action, ...(params||{}) }).toString();
+    const resp = await fetch(`${GAS_API_URL}?${qs}`, { method: 'GET', cache: 'no-store' });
+    const json = await resp.json();
+    if (!json.ok) throw new Error(json.error || 'API error');
+    return json;
+  }
+
+  async function ask(){
+    const q = qEl.value.trim(); if (!q) return;
+    // timers / UI state…
+    const [g, p] = await Promise.all([
+      api('ask_gemini', { q }),
+      api('ask_python', { q }),
+    ]);
+    // render g.answer, p.answer; stop timers
+  }
+
+  async function previewPlants(){
+    const o = await api('preview');
+    // render o.sheet, o.count, o.sample
+  }
+</script>
+
+  
   <!-- Early theme set (prevents flash of wrong theme) -->
-  <script>
+  <script> 
   (function(){
     function safeGet(k){ try { return localStorage.getItem(k); } catch(_) { return null; } }
     var saved = safeGet('plantqa_theme'); // 'light' | 'dark' | null
