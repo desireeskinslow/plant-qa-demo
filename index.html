@@ -5,32 +5,35 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>Plant Q&A</title>
 <style>
-  :root{
-    --bg:#000; --surface:#111; --text:#e7e7e7; --muted:#9aa0a6; --border:#222;
-    --accent1:#1e90ff; --accent2:#3ea0ff; --radius:14px;
-  }
-  body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,sans-serif}
-  .wrap{max-width:900px;margin:0 auto;padding:16px}
+  :root{ --bg:#000; --surface:#111; --text:#e7e7e7; --muted:#9aa0a6; --border:#222;
+         --accent1:#1e90ff; --accent2:#3ea0ff; }
+  html,body{margin:0;min-height:100%}
+  body{background:var(--bg);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
 
+  .wrap{max-width:960px;margin:0 auto;padding:16px}
   header{text-align:center;margin-bottom:14px}
   h1{margin:0;font-size:22px}
   .sub{color:var(--muted);font-size:14px;margin-top:4px}
-  .card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px;margin-top:12px}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px;margin-top:12px;box-shadow:0 8px 24px rgba(0,0,0,.35)}
 
+  /* Ask area */
+  .ask-grid{display:grid;grid-template-columns:1fr;gap:12px;align-items:start}
   textarea{
-    width:100%;min-height:100px;background:#000;color:var(--text);
-    border:1px solid var(--border);border-radius:10px;padding:12px;font-size:16px;resize:vertical
+    width:100%;min-height:120px;background:#000;color:var(--text);
+    border:1px solid var(--border);border-radius:10px;padding:12px;font-size:16px;line-height:1.5;resize:vertical
   }
-  .actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+  .actions{display:flex;flex-direction:column;gap:8px;width:100%}
   .btn{
     border:0;border-radius:10px;padding:12px 16px;font-size:15px;font-weight:600;cursor:pointer;color:#fff;
-    background:linear-gradient(135deg,var(--accent1),var(--accent2));flex:1 1 160px;min-width:140px
+    background:linear-gradient(135deg,var(--accent1),var(--accent2));width:100%
   }
   .btn.ghost{background:transparent;border:1px solid var(--border);color:var(--text)}
-  .hint{font-size:13px;color:var(--muted);margin-top:6px}
 
   .grid{display:grid;gap:12px;margin-top:14px}
-  @media(min-width:900px){.grid{grid-template-columns:1fr 1fr}}
+  @media(min-width:900px){
+    .ask-grid{grid-template-columns:1fr minmax(220px,260px)}
+    .grid{grid-template-columns:1fr 1fr}
+  }
 
   .head{display:flex;justify-content:space-between;align-items:center}
   .chip{font-size:12px;color:var(--muted)}
@@ -47,12 +50,13 @@
     </header>
 
     <div class="card">
-      <textarea id="q" placeholder="e.g., which need full sun? or if the low is 45°F, which should come inside?"></textarea>
-      <div class="actions">
-        <button id="askBtn" class="btn">Ask</button>
-        <button id="previewBtn" class="btn ghost">Preview plants</button>
+      <div class="ask-grid">
+        <textarea id="q" placeholder="e.g., which need full sun? or if the low is 45°F, which should come inside?"></textarea>
+        <div class="actions">
+          <button id="askBtn" class="btn">Ask</button>
+          <button id="previewBtn" class="btn ghost">Preview plants</button>
+        </div>
       </div>
-      <div class="hint">Press <b>Enter</b> to Ask, <b>Shift+Enter</b> for a new line.</div>
     </div>
 
     <div class="grid">
@@ -74,7 +78,10 @@
   </div>
 
 <script>
+/* ====== CONFIG: your Apps Script API URL ====== */
 const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbwE9GbNFgDx_QQVakFbX3uPWIZX2PyBlvLCX13ch67ob4q2jO6ghrRKd2gPjUBJzuU/exec';
+
+/* ====== DOM ====== */
 const gOut = document.getElementById('gOut');
 const pOut = document.getElementById('pOut');
 const gmTime = document.getElementById('gmTime');
@@ -89,49 +96,62 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Enter' && !e.shiftKey && e.target.id === 'q') { e.preventDefault(); ask(); }
 });
 
-function renderAnswer(t, el){ el.textContent=t||'—'; el.classList.toggle('muted',!t); }
-function startCounter(el){ const t0=Date.now(); const id=setInterval(()=>{el.textContent=`⏳ ${((Date.now()-t0)/1000).toFixed(1)}s`;},200); return {id,t0}; }
-function stopCounter(el,t){ if(t){clearInterval(t.id); el.textContent=`⏱ ${((Date.now()-t.t0)/1000).toFixed(1)}s`; } }
-function safeErr(e){return (e&&e.message)?e.message:String(e);}
+/* ====== Helpers ====== */
+function renderAnswer(t, el){ el.textContent = t || '—'; el.classList.toggle('muted', !t); }
+function startCounter(el){ const t0 = Date.now(); const id = setInterval(()=>{ el.textContent = `⏳ ${((Date.now()-t0)/1000).toFixed(1)}s`; }, 200); return {id,t0}; }
+function stopCounter(el, tick){ if (tick){ clearInterval(tick.id); el.textContent = `⏱ ${((Date.now()-tick.t0)/1000).toFixed(1)}s`; } }
+function safeErr(e){ return (e && e.message) ? e.message : String(e); }
 
-async function api(action, params={}, {timeoutMs=30000}={}){
-  const qs=new URLSearchParams({action,...params}).toString();
-  const ctrl=new AbortController(); const timer=setTimeout(()=>ctrl.abort(new Error('timeout')),timeoutMs);
-  try{
-    const r=await fetch(`${GAS_API_URL}?${qs}`,{method:'GET',cache:'no-store',signal:ctrl.signal});
-    const text=await r.text();
-    let j; try{j=JSON.parse(text);}catch{throw new Error(`Bad JSON (${r.status})`);}
-    if(j&&j.ok===false)throw new Error(j.error||'API error');
+async function api(action, params = {}, { timeoutMs = 30000 } = {}) {
+  const qs = new URLSearchParams({ action, ...params }).toString();
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(new Error('timeout')), timeoutMs);
+  try {
+    const r = await fetch(`${GAS_API_URL}?${qs}`, { method:'GET', cache:'no-store', signal: ctrl.signal });
+    const text = await r.text();
+    let j; try { j = JSON.parse(text); } catch { throw new Error(`Bad JSON (${r.status}): ${text.slice(0,120)}`); }
+    if (j && j.ok === false) throw new Error(j.error || 'API error');
     return j;
-  }finally{clearTimeout(timer);}
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
+/* ====== Actions ====== */
 function ask(){
-  const q=qEl.value.trim(); if(!q)return;
-  renderAnswer('Thinking…',gOut); renderAnswer('Thinking…',pOut);
-  const gt=startCounter(gmTime); const pt=startCounter(pyTime);
+  const q = qEl.value.trim(); if (!q) return;
 
-  api('ask_gemini',{q},{timeoutMs:30000})
-    .then(r=>renderAnswer(r.answer||'(no answer)',gOut))
-    .catch(e=>renderAnswer('Gemini error: '+safeErr(e),gOut))
-    .finally(()=>stopCounter(gmTime,gt));
+  // Reset each side independently
+  renderAnswer('Thinking…', gOut);
+  renderAnswer('Thinking…', pOut);
+  const gt = startCounter(gmTime);
+  const pt = startCounter(pyTime);
 
-  api('ask_python',{q},{timeoutMs:45000})
-    .then(r=>renderAnswer(r.answer||'(no answer)',pOut))
-    .catch(e=>renderAnswer('Python error: '+safeErr(e),pOut))
-    .finally(()=>stopCounter(pyTime,pt));
+  // Gemini — independent
+  api('ask_gemini', { q }, { timeoutMs: 30000 })
+    .then(res => renderAnswer(res.answer || '(no answer)', gOut))
+    .catch(err => renderAnswer('Gemini error: ' + safeErr(err), gOut))
+    .finally(() => stopCounter(gmTime, gt));
+
+  // Python — independent
+  api('ask_python', { q }, { timeoutMs: 45000 })
+    .then(res => renderAnswer(res.answer || '(no answer)', pOut))
+    .catch(err => renderAnswer('Python error: ' + safeErr(err), pOut))
+    .finally(() => stopCounter(pyTime, pt));
 }
 
 function previewPlants(){
-  previewHead.textContent='Loading…'; previewList.innerHTML='';
-  api('preview',{}, {timeoutMs:15000})
-    .then(o=>{
-      previewHead.textContent=`Sheet: ${o.sheet} • ${o.count} plants`;
-      previewList.innerHTML=(o.sample||[]).map(s=>`<li>${s}</li>`).join('');
+  previewHead.textContent = 'Loading…';
+  previewList.innerHTML = '';
+  api('preview', {}, { timeoutMs: 15000 })
+    .then(o => {
+      previewHead.textContent = `Sheet: ${o.sheet} • ${o.count} plants`;
+      previewList.innerHTML = (o.sample || []).map(s => `<li>${s}</li>`).join('');
       previewList.classList.remove('muted');
     })
-    .catch(err=>{
-      previewHead.textContent='Error: '+safeErr(err); previewList.innerHTML='';
+    .catch(err => {
+      previewHead.textContent = 'Error: ' + safeErr(err);
+      previewList.innerHTML = '';
     });
 }
 </script>
