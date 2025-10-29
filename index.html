@@ -147,7 +147,7 @@
     const SHARED_PROMPT = [
       'ROLE: You are a botanical AI expert connected to a structured plant database.',
       'TASK: Answer the QUESTION by selecting only from the PLANT ROSTER provided.',
-      'OUTPUT: Return ONLY indices (e.g., "2,5,9"). If you cannot return indices reliably, you MAY return roster PLANT IDs exactly as shown (e.g., "pl_ab12cd34,pl_ef56aa78").',
+      'OUTPUT: Return ONLY indices (e.g., "2,5,9"). If you cannot return indices, return roster PLANT IDs exactly as shown (e.g., "pl_ab12cd34").',
       'RULES:',
       '- Never invent plant names.',
       '- Use roster info (name|species) and the short Wikipedia snippets attached to each plant.',
@@ -270,7 +270,7 @@
     });
     devClose.addEventListener('click', ()=> document.getElementById('dev').style.display='none');
 
-    // Initial preview (once)
+    // Initial preview (manual only; keep UX snappy—call once shortly after load)
     setTimeout(previewPlants, 200);
   </script>
 </body>
