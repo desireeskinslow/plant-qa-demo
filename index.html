@@ -1,166 +1,306 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>Plant Q&A</title>
-<style>
-  :root{ --bg:#000; --surface:#111; --text:#e7e7e7; --muted:#9aa0a6; --border:#222; --a1:#1e90ff; --a2:#3ea0ff; }
-  html,body{margin:0;min-height:100%}
-  body{background:var(--bg);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
-  *{box-sizing:border-box}
+  <meta charset="utf-8" />
+  <title>Plant Q&A</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root { color-scheme: light dark; }
+    body {
+      margin: 0; padding: 16px; background: #0b0b0b; color: #f2f2f2;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    }
+    .wrap { max-width: 960px; margin: 0 auto; }
+    h1 { font-size: 20px; font-weight: 600; margin: 0 0 12px; }
+    .sub { font-size: 13px; color: #bdbdbd; margin: 0 0 16px; }
 
-  .wrap{max-width:960px;margin:0 auto;padding:16px}
-  header{text-align:center;margin-bottom:14px}
-  h1{margin:0;font-size:22px}
-  .sub{color:var(--muted);font-size:14px;margin-top:4px}
+    /* Input row */
+    .row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px; align-items: start;
+    }
+    textarea {
+      width: 100%; box-sizing: border-box; padding: 12px 12px;
+      min-height: 44px; border-radius: 10px; border: 1px solid #2a2a2a;
+      background: #111; color: #f2f2f2; font: inherit; resize: vertical;
+    }
+    .btns {
+      display: flex; flex-direction: column; gap: 8px; min-width: 130px;
+    }
+    button {
+      padding: 10px 14px; border: 1px solid #2a2a2a; border-radius: 10px;
+      background: #1c1c1c; color: #f2f2f2; cursor: pointer;
+    }
+    button:hover:not(:disabled){ background: #242424; }
+    button:disabled { opacity:.6; cursor:not-allowed; }
 
-  .card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px;margin-top:12px;box-shadow:0 8px 24px rgba(0,0,0,.35)}
+    /* Cards */
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+    .card {
+      border: 1px solid #222; background: #111; border-radius: 12px; padding: 12px; min-height: 120px;
+    }
+    .card h3 { margin: 0 0 8px; font-size: 15px; font-weight:600; }
+    .meta { font-size: 12px; color:#9da3a8; margin: 6px 0 10px; }
+    .answer { white-space: pre-wrap; word-wrap: break-word; font-size: 14px; line-height: 1.35; }
 
-  /* ASK AREA */
-  .ask-grid{ display:grid; grid-template-columns:1fr; gap:12px; align-items:start; }
-  .ask-grid > textarea{
-    width:100%; min-height:120px; background:#000; color:var(--text);
-    border:1px solid var(--border); border-radius:10px; padding:12px;
-    font-size:16px; line-height:1.5; resize:vertical; min-width:0; max-width:100%;
-  }
-  .actions{ display:flex; flex-direction:column; gap:8px; width:100%; }
-  .btn{
-    border:0; border-radius:10px; padding:12px 16px; font-size:15px; font-weight:600; cursor:pointer; color:#fff;
-    background:linear-gradient(135deg,var(--a1),var(--a2)); width:100%;
-  }
-  .btn.ghost{ background:transparent; border:1px solid var(--border); color:var(--text) }
+    .preview { margin-top: 12px; }
+    .list { margin: 0; padding-left: 18px; }
+    .list li { margin: 2px 0; }
 
-  .grid{ display:grid; gap:12px; margin-top:14px }
-  @media(min-width:900px){
-    .ask-grid{ grid-template-columns:minmax(0,1fr) 260px; column-gap:12px; }
-    .grid{ grid-template-columns:1fr 1fr; }
-    .actions{ align-self:start; }
-  }
+    /* Dev overlay */
+    .gear { float: right; font-size: 13px; color:#9da3a8; text-decoration: underline; cursor: pointer; }
+    .overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,.65); display: none; align-items: center; justify-content: center; padding: 16px;
+    }
+    .overlay .panel {
+      background: #0f0f10; border:1px solid #222; color:#f2f2f2; width: min(980px, 96vw); max-height: 92vh; overflow: auto;
+      border-radius: 12px; padding: 16px;
+    }
+    .kgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .kcard { border:1px solid #222; border-radius: 10px; padding: 10px; background:#111; }
+    .kcard pre { white-space: pre-wrap; word-wrap: break-word; font: 12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; margin:0; }
 
-  .head{display:flex;justify-content:space-between;align-items:center}
-  .chip{font-size:12px;color:var(--muted)}
-  .answer{margin-top:8px;line-height:1.6;white-space:pre-wrap}
-  .muted{color:var(--muted)}
-  ol{padding-left:20px;margin:8px 0 0}
-  li{margin:2px 0}
-</style>
+    /* Mobile */
+    @media (max-width: 720px){
+      .grid, .kgrid { grid-template-columns: 1fr; }
+      .btns { flex-direction: row; }
+      .row { grid-template-columns: 1fr; }
+      .btns { justify-content: flex-end; }
+    }
+  </style>
 </head>
 <body>
   <div class="wrap">
-    <header>
-      <h1>🌿 Plant Q&A</h1>
-      <div class="sub">Ask about the plants. Side-by-side AI answers.</div>
-    </header>
+    <div class="gear" id="devToggle">⚙️ Dev View</div>
+    <h1>🌿 Plant Q&A</h1>
+    <p class="sub">Ask about the plants. Side-by-side AI answers.</p>
 
-    <div class="card">
-      <div class="ask-grid">
-        <textarea id="q" placeholder="e.g., which need full sun? or if the low is 45°F, which should come inside?"></textarea>
-        <div class="actions">
-          <button id="askBtn" class="btn">Ask</button>
-          <button id="previewBtn" class="btn ghost">Preview plants</button>
-        </div>
+    <div class="row">
+      <textarea id="q" rows="3" placeholder="e.g., Which need full sun? or If the low is 45°F, which should come inside?"></textarea>
+      <div class="btns">
+        <button id="askBtn">Ask</button>
+        <button id="prevBtn">Preview plants</button>
       </div>
     </div>
 
     <div class="grid">
       <div class="card">
-        <div class="head"><h3>🧠 Gemini</h3><span id="gmTime" class="chip"></span></div>
-        <div id="gOut" class="answer muted">—</div>
+        <h3>🧠 Gemini <span class="meta" id="gTime"></span></h3>
+        <div class="answer" id="gOut">—</div>
       </div>
       <div class="card">
-        <div class="head"><h3>🧬 Python LLM</h3><span id="pyTime" class="chip"></span></div>
-        <div id="pOut" class="answer muted">—</div>
+        <h3>🧬 Python LLM <span class="meta" id="pTime"></span></h3>
+        <div class="answer" id="pOut">—</div>
       </div>
     </div>
 
-    <div class="card">
-      <div class="head"><h3>Preview</h3></div>
-      <div id="previewHead" class="muted">—</div>
-      <ol id="previewList" class="muted"></ol>
+    <div class="card preview">
+      <h3>Preview</h3>
+      <div class="answer" id="previewOut">(none)</div>
     </div>
   </div>
 
-<script>
-/* ====== CONFIG: YOUR /exec URL (no placeholder) ====== */
-const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbwE9GbNFgDx_QQVakFbX3uPWIZX2PyBlvLCX13ch67ob4q2jO6ghrRKd2gPjUBJzuU/exec';
+  <!-- Dev overlay -->
+  <div class="overlay" id="dev">
+    <div class="panel">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
+        <h3 style="margin:0;font-size:16px;">⚙️ Developer View</h3>
+        <button id="devClose">Close</button>
+      </div>
 
-/* ====== DOM ====== */
-const gOut = document.getElementById('gOut');
-const pOut = document.getElementById('pOut');
-const gmTime = document.getElementById('gmTime');
-const pyTime = document.getElementById('pyTime');
-const qEl = document.getElementById('q');
-const previewHead = document.getElementById('previewHead');
-const previewList = document.getElementById('previewList');
+      <div class="kgrid">
+        <div class="kcard">
+          <strong>Gemini</strong> <span id="gModel" class="meta"></span>
+          <div class="meta" id="gStats"></div>
+          <pre id="gPlan">(indices only; shared prompt)</pre>
+        </div>
+        <div class="kcard">
+          <strong>Python LLM</strong> <span id="pModel" class="meta"></span>
+          <div class="meta" id="pStats"></div>
+          <pre id="pPlan">(indices only; shared prompt)</pre>
+        </div>
+      </div>
 
-document.getElementById('askBtn').onclick = ask;
-document.getElementById('previewBtn').onclick = previewPlants;
-document.addEventListener('keydown', e => {
-  if (e.key === 'Enter' && !e.shiftKey && e.target.id === 'q') { e.preventDefault(); ask(); }
-});
+      <div class="kgrid" style="margin-top:12px;">
+        <div class="kcard">
+          <strong>Shared Model Prompt</strong>
+          <pre id="sharedPrompt"></pre>
+        </div>
+        <div class="kcard">
+          <strong>Headers & Mapping</strong>
+          <pre id="diagMap">Loading…</pre>
+        </div>
+      </div>
 
-/* ====== Helpers ====== */
-function renderAnswer(t, el){ el.textContent = t || '—'; el.classList.toggle('muted', !t); }
-function startCounter(el){ const t0 = Date.now(); const id = setInterval(()=>{ el.textContent = `⏳ ${((Date.now()-t0)/1000).toFixed(1)}s`; }, 200); return {id,t0}; }
-function stopCounter(el, tick){ if (tick){ clearInterval(tick.id); el.textContent = `⏱ ${((Date.now()-tick.t0)/1000).toFixed(1)}s`; } }
-function asJsonOrThrow(text, status){
-  try { return JSON.parse(text); }
-  catch { throw new Error(`Bad JSON (${status}). Check your Web App /exec URL & access.`); }
-}
-function clearOutputs(){
-  renderAnswer('Thinking…', gOut);
-  renderAnswer('Thinking…', pOut);
-  gmTime.textContent = ''; pyTime.textContent = '';
-}
+      <div class="kcard" style="margin-top:12px;">
+        <strong>Processing Flow</strong>
+        <pre>Question → Build Closed-Set Roster (name|species + wiki) → LLM returns indices → Map to names → Display</pre>
+      </div>
+    </div>
+  </div>
 
-/* ====== API ====== */
-async function api(action, params = {}, { timeoutMs = 30000 } = {}) {
-  const qs = new URLSearchParams({ action, ...params }).toString();
-  const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(new Error('timeout')), timeoutMs);
-  try {
-    const r = await fetch(`${GAS_API_URL}?${qs}`, { method:'GET', cache:'no-store', signal: ctrl.signal });
-    const text = await r.text();
-    if (!r.ok) throw new Error(`HTTP ${r.status}: ${text.slice(0,160)}`);
-    const j = asJsonOrThrow(text, r.status);
-    if (j && j.ok === false) throw new Error(j.error || 'API error');
-    return j;
-  } finally { clearTimeout(timer); }
-}
+  <script>
+    const qEl   = document.getElementById('q');
+    const askBt = document.getElementById('askBtn');
+    const preBt = document.getElementById('prevBtn');
+    const gOut  = document.getElementById('gOut');
+    const pOut  = document.getElementById('pOut');
+    const gTime = document.getElementById('gTime');
+    const pTime = document.getElementById('pTime');
+    const prev  = document.getElementById('previewOut');
 
-/* ====== Actions ====== */
-function ask(){
-  const q = qEl.value.trim(); if (!q) return;
-  clearOutputs();
-  const gt = startCounter(gmTime);
-  const pt = startCounter(pyTime);
+    const devToggle = document.getElementById('devToggle');
+    const devWrap   = document.getElementById('dev');
+    const devClose  = document.getElementById('devClose');
+    const gModel    = document.getElementById('gModel');
+    const pModel    = document.getElementById('pModel');
+    const gStats    = document.getElementById('gStats');
+    const pStats    = document.getElementById('pStats');
+    const gPlan     = document.getElementById('gPlan');
+    const pPlan     = document.getElementById('pPlan');
+    const shared    = document.getElementById('sharedPrompt');
+    const diagMap   = document.getElementById('diagMap');
 
-  api('ask_gemini', { q }, { timeoutMs: 45000 })
-    .then(res => renderAnswer(res.answer || '(no answer)', gOut))
-    .catch(err => renderAnswer('Gemini error: ' + err.message, gOut))
-    .finally(() => stopCounter(gmTime, gt));
+    // Shared prompt text (identical for both models)
+    const SHARED_PROMPT = [
+      'ROLE: You are a botanical AI expert connected to a structured plant database.',
+      'TASK: Answer the QUESTION by selecting only from the PLANT ROSTER provided.',
+      'FORMAT: Return ONLY a comma-separated list of roster indices (e.g., "2,5,9"). If none apply, return "0".',
+      'RULES:',
+      '- Never invent plant names.',
+      '- Use roster info (name|species) and short Wikipedia snippets attached to each plant.',
+      '- If the QUESTION asks for a count, return indices for all that match (front-end will count).',
+      '- No prose. No extra words. Indices or "0" only.'
+    ].join('\n');
 
-  api('ask_python', { q }, { timeoutMs: 60000 })
-    .then(res => renderAnswer(res.answer || '(no answer)', pOut))
-    .catch(err => renderAnswer('Python error: ' + err.message, pOut))
-    .finally(() => stopCounter(pyTime, pt));
-}
+    // Timers (independent)
+    let gTimer = null, pTimer = null;
+    let gStart = 0,    pStart = 0;
 
-function previewPlants(){
-  previewHead.textContent = 'Loading…';
-  previewList.innerHTML = '';
-  api('preview', {}, { timeoutMs: 15000 })
-    .then(o => {
-      previewHead.textContent = `Sheet: ${o.sheet} • ${o.count} plants`;
-      previewList.innerHTML = (o.sample || []).map(s => `<li>${s}</li>`).join('');
-      previewList.classList.remove('muted');
-    })
-    .catch(err => {
-      previewHead.textContent = 'Error: ' + err.message;
-      previewList.innerHTML = '';
+    function fmtSecs(ms){ return (ms/1000).toFixed(1) + 's'; }
+
+    function startTimer(which){
+      const now = Date.now();
+      if (which === 'g'){
+        gStart = now;
+        gTime.textContent = '⏱ 0.0s';
+        if (gTimer) clearInterval(gTimer);
+        gTimer = setInterval(()=>{ gTime.textContent = '⏱ ' + fmtSecs(Date.now()-gStart); }, 100);
+      } else {
+        pStart = now;
+        pTime.textContent = '⏱ 0.0s';
+        if (pTimer) clearInterval(pTimer);
+        pTimer = setInterval(()=>{ pTime.textContent = '⏱ ' + fmtSecs(Date.now()-pStart); }, 100);
+      }
+    }
+    function stopTimer(which, elapsedMs){
+      if (which === 'g'){ if (gTimer) clearInterval(gTimer); gTime.textContent = '⏱ ' + fmtSecs(elapsedMs); }
+      else { if (pTimer) clearInterval(pTimer); pTime.textContent = '⏱ ' + fmtSecs(elapsedMs); }
+    }
+
+    function clearOutputs(){
+      gOut.textContent = '—';
+      pOut.textContent = '—';
+      gTime.textContent = '';
+      pTime.textContent = '';
+      // clear dev stats each run
+      gStats.textContent = '';
+      pStats.textContent = '';
+      gPlan.textContent  = '(indices only; shared prompt)';
+      pPlan.textContent  = '(indices only; shared prompt)';
+    }
+
+    function ask(){
+      const q = (qEl.value || '').trim();
+      if (!q) { qEl.focus(); return; }
+
+      clearOutputs();
+      askBt.disabled = true; preBt.disabled = true;
+
+      // kick both calls in parallel; show as they complete
+      startTimer('g');
+      google.script.run
+        .withSuccessHandler(res => {
+          stopTimer('g', res.elapsedMs);
+          if (!res.ok) gOut.textContent = 'Gemini error: ' + res.error;
+          else gOut.textContent = res.names.length
+              ? 'Matches ('+res.matched+'; checked '+res.scanned+'):\n' + res.names.join('\n')
+              : 'None found.';
+          gModel.textContent = ' • ' + (res.model || '');
+          gStats.textContent = 'Scanned: '+res.scanned+'   Matched: '+res.matched;
+          gPlan.textContent  = res.plan;
+          // Re-enable only when both finished (check if Python also done)
+          if (pTime.textContent) { askBt.disabled = false; preBt.disabled = false; }
+        })
+        .withFailureHandler(err => {
+          stopTimer('g', 0);
+          gOut.textContent = 'Gemini error: ' + err;
+          gModel.textContent = '';
+          if (pTime.textContent) { askBt.disabled = false; preBt.disabled = false; }
+        })
+        .askGemini(q);
+
+      startTimer('p');
+      google.script.run
+        .withSuccessHandler(res => {
+          stopTimer('p', res.elapsedMs);
+          if (!res.ok) pOut.textContent = 'Python error: ' + res.error;
+          else pOut.textContent = res.names.length
+              ? 'Matches ('+res.matched+'; checked '+res.scanned+'):\n' + res.names.join('\n')
+              : 'None found.';
+          pModel.textContent = ' • ' + (res.model || '');
+          pStats.textContent = 'Scanned: '+res.scanned+'   Matched: '+res.matched;
+          pPlan.textContent  = res.plan;
+          if (gTime.textContent) { askBt.disabled = false; preBt.disabled = false; }
+        })
+        .withFailureHandler(err => {
+          stopTimer('p', 0);
+          pOut.textContent = 'Python error: ' + err;
+          pModel.textContent = '';
+          if (gTime.textContent) { askBt.disabled = false; preBt.disabled = false; }
+        })
+        .askPython(q);
+    }
+
+    function previewPlants(){
+      prev.textContent = 'Loading…';
+      google.script.run
+        .withSuccessHandler(obj => {
+          if (!obj || !obj.ok) { prev.textContent = '(none)'; return; }
+          const lines = (obj.sample || []).map((s, i)=> (s || '').trim()).filter(Boolean);
+          const header = 'Sheet: ' + obj.sheet + ' • ' + obj.count + ' plants';
+          prev.textContent = header + (lines.length ? '\n' + lines.join('\n') : '');
+        })
+        .withFailureHandler(err => { prev.textContent = 'Error: ' + err; })
+        .previewPlantsRich();
+    }
+
+    // Enter submits (unless Shift pressed)
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Enter' && !e.shiftKey && e.target === qEl) {
+        e.preventDefault();
+        ask();
+      }
     });
-}
-</script>
+    askBt.addEventListener('click', ask);
+    preBt.addEventListener('click', previewPlants);
+
+    // Dev overlay
+    devToggle.addEventListener('click', () => {
+      shared.textContent = SHARED_PROMPT;
+      diagMap.textContent = 'Loading…';
+      google.script.run.withSuccessHandler(obj=>{
+        diagMap.textContent = JSON.stringify(obj, null, 2);
+      }).withFailureHandler(err=>{
+        diagMap.textContent = 'Error: ' + err;
+      }).doGet({ parameter: { action:'diag' } }); // hack to reuse route
+      devWrap.style.display = 'flex';
+    });
+    devClose.addEventListener('click', () => devWrap.style.display = 'none');
+
+    // Initial preview (lazy)
+    setTimeout(previewPlants, 200);
+  </script>
 </body>
 </html>
