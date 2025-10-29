@@ -6,67 +6,44 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     :root { color-scheme: light dark; }
-    body {
-      margin: 0; padding: 16px; background: #0b0b0b; color: #f2f2f2;
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-    }
+    body { margin:0; padding:16px; background:#0b0b0b; color:#f2f2f2;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
     .wrap { max-width: 960px; margin: 0 auto; }
     h1 { font-size: 20px; font-weight: 600; margin: 0 0 12px; }
     .sub { font-size: 13px; color: #bdbdbd; margin: 0 0 16px; }
 
-    /* Input row */
-    .row {
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 10px; align-items: start;
-    }
+    /* Input row + right buttons */
+    .row { display:grid; grid-template-columns: 1fr auto; gap:10px; align-items:start; }
     textarea {
-      width: 100%; box-sizing: border-box; padding: 12px 12px;
-      min-height: 44px; border-radius: 10px; border: 1px solid #2a2a2a;
-      background: #111; color: #f2f2f2; font: inherit; resize: vertical;
+      width:100%; box-sizing:border-box; padding:12px; min-height:44px;
+      border-radius:10px; border:1px solid #2a2a2a; background:#111; color:#f2f2f2; font:inherit; resize:vertical;
     }
-    .btns {
-      display: flex; flex-direction: column; gap: 8px; min-width: 130px;
-    }
-    button {
-      padding: 10px 14px; border: 1px solid #2a2a2a; border-radius: 10px;
-      background: #1c1c1c; color: #f2f2f2; cursor: pointer;
-    }
-    button:hover:not(:disabled){ background: #242424; }
-    button:disabled { opacity:.6; cursor:not-allowed; }
+    .btns { display:flex; flex-direction:column; gap:8px; min-width:130px; }
+    button { padding:10px 14px; border:1px solid #2a2a2a; border-radius:10px; background:#1c1c1c; color:#f2f2f2; cursor:pointer; }
+    button:hover:not(:disabled){ background:#242424; }
+    button:disabled{ opacity:.6; cursor:not-allowed; }
 
-    /* Cards */
-    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
-    .card {
-      border: 1px solid #222; background: #111; border-radius: 12px; padding: 12px; min-height: 120px;
-    }
-    .card h3 { margin: 0 0 8px; font-size: 15px; font-weight:600; }
-    .meta { font-size: 12px; color:#9da3a8; margin: 6px 0 10px; }
-    .answer { white-space: pre-wrap; word-wrap: break-word; font-size: 14px; line-height: 1.35; }
+    .grid { display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-top:12px; }
+    .card { border:1px solid #222; background:#111; border-radius:12px; padding:12px; min-height:120px; }
+    .card h3 { margin:0 0 8px; font-size:15px; font-weight:600; }
+    .meta { font-size:12px; color:#9da3a8; margin-left:6px; }
+    .answer { white-space:pre-wrap; word-wrap:break-word; font-size:14px; line-height:1.35; }
 
-    .preview { margin-top: 12px; }
-    .list { margin: 0; padding-left: 18px; }
-    .list li { margin: 2px 0; }
+    .preview { margin-top:12px; }
+    .gear { float:right; font-size:13px; color:#9da3a8; text-decoration:underline; cursor:pointer; }
 
     /* Dev overlay */
-    .gear { float: right; font-size: 13px; color:#9da3a8; text-decoration: underline; cursor: pointer; }
-    .overlay {
-      position: fixed; inset: 0; background: rgba(0,0,0,.65); display: none; align-items: center; justify-content: center; padding: 16px;
-    }
-    .overlay .panel {
-      background: #0f0f10; border:1px solid #222; color:#f2f2f2; width: min(980px, 96vw); max-height: 92vh; overflow: auto;
-      border-radius: 12px; padding: 16px;
-    }
-    .kgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-    .kcard { border:1px solid #222; border-radius: 10px; padding: 10px; background:#111; }
-    .kcard pre { white-space: pre-wrap; word-wrap: break-word; font: 12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; margin:0; }
+    .overlay { position:fixed; inset:0; background:rgba(0,0,0,.65); display:none; align-items:center; justify-content:center; padding:16px; }
+    .overlay .panel { background:#0f0f10; border:1px solid #222; color:#f2f2f2; width:min(980px,96vw); max-height:92vh; overflow:auto; border-radius:12px; padding:16px; }
+    .kgrid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .kcard { border:1px solid #222; border-radius:10px; padding:10px; background:#111; }
+    .kcard pre { white-space:pre-wrap; word-wrap:break-word; font:12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; margin:0; }
 
     /* Mobile */
     @media (max-width: 720px){
       .grid, .kgrid { grid-template-columns: 1fr; }
-      .btns { flex-direction: row; }
       .row { grid-template-columns: 1fr; }
-      .btns { justify-content: flex-end; }
+      .btns { flex-direction: row; justify-content: flex-end; }
     }
   </style>
 </head>
@@ -113,12 +90,12 @@
         <div class="kcard">
           <strong>Gemini</strong> <span id="gModel" class="meta"></span>
           <div class="meta" id="gStats"></div>
-          <pre id="gPlan">(indices only; shared prompt)</pre>
+          <pre id="gPlan">(closed-set indices/IDs; shared prompt)</pre>
         </div>
         <div class="kcard">
           <strong>Python LLM</strong> <span id="pModel" class="meta"></span>
           <div class="meta" id="pStats"></div>
-          <pre id="pPlan">(indices only; shared prompt)</pre>
+          <pre id="pPlan">(closed-set indices/IDs; shared prompt)</pre>
         </div>
       </div>
 
@@ -135,7 +112,7 @@
 
       <div class="kcard" style="margin-top:12px;">
         <strong>Processing Flow</strong>
-        <pre>Question → Build Closed-Set Roster (name|species + wiki) → LLM returns indices → Map to names → Display</pre>
+        <pre>Question → Closed-Set Roster (name|species + wiki) → LLM returns indices/IDs → Map to names → Display</pre>
       </div>
     </div>
   </div>
@@ -162,34 +139,29 @@
     const shared    = document.getElementById('sharedPrompt');
     const diagMap   = document.getElementById('diagMap');
 
-    // Shared prompt text (identical for both models)
     const SHARED_PROMPT = [
       'ROLE: You are a botanical AI expert connected to a structured plant database.',
       'TASK: Answer the QUESTION by selecting only from the PLANT ROSTER provided.',
-      'FORMAT: Return ONLY a comma-separated list of roster indices (e.g., "2,5,9"). If none apply, return "0".',
+      'OUTPUT FORMAT: Return ONLY indices (e.g., "2,5,9"). If you cannot output indices reliably, you MAY return roster PLANT IDs exactly as shown (e.g., "pl_ab12cd34,pl_ef56aa78").',
       'RULES:',
       '- Never invent plant names.',
       '- Use roster info (name|species) and short Wikipedia snippets attached to each plant.',
-      '- If the QUESTION asks for a count, return indices for all that match (front-end will count).',
-      '- No prose. No extra words. Indices or "0" only.'
+      '- If the QUESTION asks for a count, return all matching indices/IDs (front-end will count).',
+      '- Absolutely no prose. No extra words.'
     ].join('\n');
 
     // Timers (independent)
     let gTimer = null, pTimer = null;
     let gStart = 0,    pStart = 0;
-
     function fmtSecs(ms){ return (ms/1000).toFixed(1) + 's'; }
-
     function startTimer(which){
       const now = Date.now();
       if (which === 'g'){
-        gStart = now;
-        gTime.textContent = '⏱ 0.0s';
+        gStart = now; gTime.textContent = '⏱ 0.0s';
         if (gTimer) clearInterval(gTimer);
         gTimer = setInterval(()=>{ gTime.textContent = '⏱ ' + fmtSecs(Date.now()-gStart); }, 100);
       } else {
-        pStart = now;
-        pTime.textContent = '⏱ 0.0s';
+        pStart = now; pTime.textContent = '⏱ 0.0s';
         if (pTimer) clearInterval(pTimer);
         pTimer = setInterval(()=>{ pTime.textContent = '⏱ ' + fmtSecs(Date.now()-pStart); }, 100);
       }
@@ -204,33 +176,30 @@
       pOut.textContent = '—';
       gTime.textContent = '';
       pTime.textContent = '';
-      // clear dev stats each run
       gStats.textContent = '';
       pStats.textContent = '';
-      gPlan.textContent  = '(indices only; shared prompt)';
-      pPlan.textContent  = '(indices only; shared prompt)';
+      gPlan.textContent  = '(closed-set indices/IDs; shared prompt)';
+      pPlan.textContent  = '(closed-set indices/IDs; shared prompt)';
     }
 
     function ask(){
       const q = (qEl.value || '').trim();
       if (!q) { qEl.focus(); return; }
-
       clearOutputs();
       askBt.disabled = true; preBt.disabled = true;
 
-      // kick both calls in parallel; show as they complete
+      // Gemini
       startTimer('g');
       google.script.run
         .withSuccessHandler(res => {
           stopTimer('g', res.elapsedMs);
           if (!res.ok) gOut.textContent = 'Gemini error: ' + res.error;
           else gOut.textContent = res.names.length
-              ? 'Matches ('+res.matched+'; checked '+res.scanned+'):\n' + res.names.join('\n')
-              : 'None found.';
+            ? 'Matches ('+res.matched+'; checked '+res.scanned+'):\n' + res.names.join('\n')
+            : 'None found.';
           gModel.textContent = ' • ' + (res.model || '');
           gStats.textContent = 'Scanned: '+res.scanned+'   Matched: '+res.matched;
           gPlan.textContent  = res.plan;
-          // Re-enable only when both finished (check if Python also done)
           if (pTime.textContent) { askBt.disabled = false; preBt.disabled = false; }
         })
         .withFailureHandler(err => {
@@ -241,14 +210,15 @@
         })
         .askGemini(q);
 
+      // Python
       startTimer('p');
       google.script.run
         .withSuccessHandler(res => {
           stopTimer('p', res.elapsedMs);
           if (!res.ok) pOut.textContent = 'Python error: ' + res.error;
           else pOut.textContent = res.names.length
-              ? 'Matches ('+res.matched+'; checked '+res.scanned+'):\n' + res.names.join('\n')
-              : 'None found.';
+            ? 'Matches ('+res.matched+'; checked '+res.scanned+'):\n' + res.names.join('\n')
+            : 'None found.';
           pModel.textContent = ' • ' + (res.model || '');
           pStats.textContent = 'Scanned: '+res.scanned+'   Matched: '+res.matched;
           pPlan.textContent  = res.plan;
@@ -268,15 +238,15 @@
       google.script.run
         .withSuccessHandler(obj => {
           if (!obj || !obj.ok) { prev.textContent = '(none)'; return; }
-          const lines = (obj.sample || []).map((s, i)=> (s || '').trim()).filter(Boolean);
           const header = 'Sheet: ' + obj.sheet + ' • ' + obj.count + ' plants';
+          const lines = (obj.sample || []).map(s => (s||'').trim()).filter(Boolean);
           prev.textContent = header + (lines.length ? '\n' + lines.join('\n') : '');
         })
         .withFailureHandler(err => { prev.textContent = 'Error: ' + err; })
         .previewPlantsRich();
     }
 
-    // Enter submits (unless Shift pressed)
+    // Enter submits (unless Shift)
     document.addEventListener('keydown', e => {
       if (e.key === 'Enter' && !e.shiftKey && e.target === qEl) {
         e.preventDefault();
@@ -288,18 +258,18 @@
 
     // Dev overlay
     devToggle.addEventListener('click', () => {
-      shared.textContent = SHARED_PROMPT;
+      document.getElementById('sharedPrompt').textContent = SHARED_PROMPT;
       diagMap.textContent = 'Loading…';
       google.script.run.withSuccessHandler(obj=>{
         diagMap.textContent = JSON.stringify(obj, null, 2);
       }).withFailureHandler(err=>{
         diagMap.textContent = 'Error: ' + err;
-      }).doGet({ parameter: { action:'diag' } }); // hack to reuse route
+      }).doGet({ parameter: { action:'diag' } });
       devWrap.style.display = 'flex';
     });
     devClose.addEventListener('click', () => devWrap.style.display = 'none');
 
-    // Initial preview (lazy)
+    // Initial preview
     setTimeout(previewPlants, 200);
   </script>
 </body>
