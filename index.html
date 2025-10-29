@@ -43,6 +43,7 @@
   .answer{margin-top:8px;line-height:1.6;white-space:pre-wrap}
   .muted{color:var(--muted)}
   ol{padding-left:20px;margin:8px 0 0}
+  li{margin:2px 0}
 </style>
 </head>
 <body>
@@ -81,7 +82,7 @@
   </div>
 
 <script>
-/* ====== CONFIG: paste your /exec URL here ====== */
+/* ====== CONFIG: YOUR /exec URL (no placeholder) ====== */
 const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbwE9GbNFgDx_QQVakFbX3uPWIZX2PyBlvLCX13ch67ob4q2jO6ghrRKd2gPjUBJzuU/exec';
 
 /* ====== DOM ====== */
@@ -107,7 +108,13 @@ function asJsonOrThrow(text, status){
   try { return JSON.parse(text); }
   catch { throw new Error(`Bad JSON (${status}). Check your Web App /exec URL & access.`); }
 }
+function clearOutputs(){
+  renderAnswer('Thinking…', gOut);
+  renderAnswer('Thinking…', pOut);
+  gmTime.textContent = ''; pyTime.textContent = '';
+}
 
+/* ====== API ====== */
 async function api(action, params = {}, { timeoutMs = 30000 } = {}) {
   const qs = new URLSearchParams({ action, ...params }).toString();
   const ctrl = new AbortController();
@@ -125,17 +132,16 @@ async function api(action, params = {}, { timeoutMs = 30000 } = {}) {
 /* ====== Actions ====== */
 function ask(){
   const q = qEl.value.trim(); if (!q) return;
-  renderAnswer('Thinking…', gOut);
-  renderAnswer('Thinking…', pOut);
+  clearOutputs();
   const gt = startCounter(gmTime);
   const pt = startCounter(pyTime);
 
-  api('ask_gemini', { q }, { timeoutMs: 30000 })
+  api('ask_gemini', { q }, { timeoutMs: 45000 })
     .then(res => renderAnswer(res.answer || '(no answer)', gOut))
     .catch(err => renderAnswer('Gemini error: ' + err.message, gOut))
     .finally(() => stopCounter(gmTime, gt));
 
-  api('ask_python', { q }, { timeoutMs: 45000 })
+  api('ask_python', { q }, { timeoutMs: 60000 })
     .then(res => renderAnswer(res.answer || '(no answer)', pOut))
     .catch(err => renderAnswer('Python error: ' + err.message, pOut))
     .finally(() => stopCounter(pyTime, pt));
