@@ -10,16 +10,17 @@
       font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
     .wrap { max-width: 960px; margin: 0 auto; }
 
-    h1 { font-size: 20px; font-weight: 600; margin: 0 0 8px; }
+    h1 { font-size: 20px; font-weight: 600; margin: 0 0 6px; }
     .sub { font-size: 13px; color:#bdbdbd; margin: 0 0 14px; }
 
-    /* Input row with buttons on the right */
-    .row { display:grid; grid-template-columns: 1fr auto; gap:10px; align-items:start; }
+    /* Input row with buttons on the right; never overlap */
+    .row { display:grid; grid-template-columns: minmax(0,1fr) auto; gap:10px; align-items:start; }
     textarea {
-      width:100%; box-sizing:border-box; padding:12px; min-height:44px;
-      border-radius:10px; border:1px solid #2a2a2a; background:#111; color:#f2f2f2; font:inherit; resize:vertical;
+      width:100%; box-sizing:border-box; padding:12px; min-height:48px;
+      border-radius:10px; border:1px solid #2a2a2a; background:#111; color:#f2f2f2;
+      font:inherit; resize:vertical;
     }
-    .btns { display:flex; flex-direction:column; gap:8px; align-items:flex-end; }
+    .btns { display:flex; flex-direction:column; gap:8px; align-items:flex-end; align-self:start; }
     .btns button { min-width:120px; }
 
     button { padding:10px 14px; border:1px solid #2a2a2a; border-radius:10px; background:#1c1c1c; color:#f2f2f2; cursor:pointer; }
@@ -33,9 +34,9 @@
     .answer { white-space:pre-wrap; word-wrap:break-word; font-size:14px; line-height:1.35; }
 
     .preview { margin-top:12px; }
+    .gear { float:right; font-size:13px; color:#9da3a8; text-decoration:underline; cursor:pointer; }
 
     /* Dev overlay */
-    .gear { float:right; font-size:13px; color:#9da3a8; text-decoration:underline; cursor:pointer; }
     .overlay { position:fixed; inset:0; background:rgba(0,0,0,.65); display:none; align-items:center; justify-content:center; padding:16px; }
     .overlay .panel { background:#0f0f10; border:1px solid #222; color:#f2f2f2; width:min(980px,96vw); max-height:92vh; overflow:auto; border-radius:12px; padding:16px; }
     .kgrid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
@@ -46,7 +47,7 @@
     @media (max-width: 720px){
       .grid, .kgrid { grid-template-columns: 1fr; }
       .row { grid-template-columns: 1fr; }
-      .btns { flex-direction: row; justify-content: flex-end; }
+      .btns { flex-direction: row; justify-content: flex-end; align-self: auto; }
       .btns button { min-width: auto; }
     }
   </style>
@@ -109,7 +110,7 @@
           <pre id="sharedPrompt"></pre>
         </div>
         <div class="kcard">
-          <strong>Headers & Mapping</strong>
+          <strong>Sheet Snapshot</strong>
           <pre id="diagMap">Loading…</pre>
         </div>
       </div>
@@ -242,13 +243,13 @@
           if (!obj || !obj.ok){ prev.textContent='(none)'; return; }
           const header='Sheet: '+obj.sheet+' • '+obj.count+' plants';
           const lines=(obj.sample||[]).map(s=>(s||'').trim()).filter(Boolean);
-          prev.textContent = header + (lines.length?'\n'+lines.join('\n'):'');
+          prev.textContent = header + (lines.length?'\n' + lines.join('\n') : '');
         })
         .withFailureHandler(err=>{ prev.textContent='Error: '+err; })
         .previewPlantsRich();
     }
 
-    // Enter submits (unless Shift)
+    // Enter submits
     document.addEventListener('keydown', e=>{
       if (e.key==='Enter' && !e.shiftKey && e.target===qEl){
         e.preventDefault(); ask();
@@ -265,12 +266,12 @@
         diagMap.textContent = JSON.stringify(obj, null, 2);
       }).withFailureHandler(err=>{
         diagMap.textContent = 'Error: '+err;
-      }).diagHeaders();
+      }).snapshot();
       document.getElementById('dev').style.display='flex';
     });
     devClose.addEventListener('click', ()=> document.getElementById('dev').style.display='none');
 
-    // Initial preview (manual only; keep UX snappy—call once shortly after load)
+    // Optional quick preview
     setTimeout(previewPlants, 200);
   </script>
 </body>
